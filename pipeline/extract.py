@@ -3,6 +3,8 @@
 import os
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE_URL = os.environ.get("SOURCE_API_URL", "https://api.internal/v1")
 PAGE_SIZE = 500
@@ -18,9 +20,21 @@ def fetch_page(session, path, page):
     return response.json()
 
 
+def build_session():
+    retry = Retry(
+        total=4,
+        backoff_factor=0.5,
+        status_forcelist=(500, 502, 503, 504),
+        allowed_methods=("GET",),
+    )
+    session = requests.Session()
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    return session
+
+
 def extract(path, since):
     """Yield every record in `path` changed since `since`."""
-    session = requests.Session()
+    session = build_session()
     page = 1
     while True:
         payload = fetch_page(session, path, page)
