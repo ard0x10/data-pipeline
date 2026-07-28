@@ -1,0 +1,9 @@
+jobs:
+  - name: orders
+    path: orders
+    table: warehouse.orders
+    cron: "0 2 * * *"
+  - name: refunds
+    path: refunds
+    table: warehouse.refunds
+    cron: "30 2 * * *"
