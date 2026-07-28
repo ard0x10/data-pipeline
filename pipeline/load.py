@@ -1,5 +1,9 @@
 """Write transformed rows into the warehouse."""
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 BATCH_SIZE = 1000
 
 INSERT = (
@@ -25,5 +29,7 @@ def load(connection, table, rows):
         for batch in batched(rows):
             cursor.executemany(INSERT.format(table=table), batch)
             total += len(batch)
+            logger.debug("inserted batch of %s into %s", len(batch), table)
     connection.commit()
+    logger.info("loaded %s rows into %s", total, table)
     return total
