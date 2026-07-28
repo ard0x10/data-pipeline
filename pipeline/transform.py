@@ -12,6 +12,8 @@ COLUMN_MAP = {
 
 
 def parse_timestamp(value):
+    if value is None:
+        return None
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
