@@ -6,4 +6,4 @@ jobs:
   - name: refunds
     path: refunds
     table: warehouse.refunds
-    cron: "30 2 * * *"
+    cron: "0 3 * * *"
