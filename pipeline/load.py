@@ -2,6 +2,8 @@
 
 import logging
 
+from .transform import dedupe
+
 logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 1000
@@ -26,7 +28,7 @@ def batched(rows, size=BATCH_SIZE):
 def load(connection, table, rows):
     total = 0
     with connection.cursor() as cursor:
-        for batch in batched(rows):
+        for batch in batched(dedupe(rows)):
             cursor.executemany(INSERT.format(table=table), batch)
             total += len(batch)
             logger.debug("inserted batch of %s into %s", len(batch), table)
