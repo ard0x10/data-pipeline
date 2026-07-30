@@ -1,4 +1,4 @@
-requests
-psycopg2-binary
-PyYAML
-pytest
+requests==2.32.3
+psycopg2-binary==2.9.9
+PyYAML==6.0.2
+pytest==8.3.3
