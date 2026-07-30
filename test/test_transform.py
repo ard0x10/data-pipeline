@@ -1,6 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
-from pipeline.transform import COLUMN_MAP, dedupe, parse_timestamp, transform
+from pipeline.transform import (
+    COLUMN_MAP,
+    dedupe,
+    normalize_currency,
+    parse_timestamp,
+    transform,
+)
 
 
 def test_parse_timestamp_returns_none_for_null():
@@ -31,6 +37,16 @@ def test_transform_maps_source_columns():
     assert row["source_id"] == "ord_1"
     assert row["amount_cents"] == 1250
     assert row["created_at"] == datetime(2026, 7, 28, 0, 0, tzinfo=timezone.utc)
+    assert row["currency"] == "EUR"
+
+
+def test_normalize_currency_uppercases_and_trims():
+    assert normalize_currency(" usd ") == "USD"
+
+
+def test_normalize_currency_returns_none_for_blank_values():
+    assert normalize_currency(None) is None
+    assert normalize_currency("   ") is None
 
 
 def test_transform_fills_missing_fields_with_none():
