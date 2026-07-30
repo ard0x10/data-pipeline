@@ -28,8 +28,17 @@ def dedupe(rows):
         yield row
 
 
+def normalize_currency(value):
+    """Return `value` as an ISO 4217 alphabetic code, or None when unset."""
+    if value is None:
+        return None
+    code = value.strip().upper()
+    return code or None
+
+
 def transform(record):
     row = {target: record.get(source) for source, target in COLUMN_MAP.items()}
     row["created_at"] = parse_timestamp(row["created_at"])
     row["updated_at"] = parse_timestamp(row["updated_at"])
+    row["currency"] = normalize_currency(row["currency"])
     return row
