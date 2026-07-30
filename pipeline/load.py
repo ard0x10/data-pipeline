@@ -1,6 +1,7 @@
 """Write transformed rows into the warehouse."""
 
 import logging
+from itertools import chain
 
 from .transform import dedupe
 
@@ -26,9 +27,16 @@ def batched(rows, size=BATCH_SIZE):
 
 
 def load(connection, table, rows):
+    batches = batched(dedupe(rows))
+    try:
+        first = next(batches)
+    except StopIteration:
+        logger.info("nothing to load into %s, skipping", table)
+        return 0
+
     total = 0
     with connection.cursor() as cursor:
-        for batch in batched(dedupe(rows)):
+        for batch in chain([first], batches):
             cursor.executemany(INSERT.format(table=table), batch)
             total += len(batch)
             logger.debug("inserted batch of %s into %s", len(batch), table)
