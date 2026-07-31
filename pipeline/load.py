@@ -9,9 +9,16 @@ logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 1000
 
-INSERT = (
+# `created_at` is deliberately left out of the update: the source sets it once and a
+# re-run should not move it. The unique index this relies on lives in
+# schema/0001_unique_source_id.sql.
+UPSERT = (
     "INSERT INTO {table} (source_id, created_at, updated_at, amount_cents, currency) "
-    "VALUES (%(source_id)s, %(created_at)s, %(updated_at)s, %(amount_cents)s, %(currency)s)"
+    "VALUES (%(source_id)s, %(created_at)s, %(updated_at)s, %(amount_cents)s, %(currency)s) "
+    "ON CONFLICT (source_id) DO UPDATE SET "
+    "updated_at = EXCLUDED.updated_at, "
+    "amount_cents = EXCLUDED.amount_cents, "
+    "currency = EXCLUDED.currency"
 )
 
 
@@ -37,9 +44,9 @@ def load(connection, table, rows):
     total = 0
     with connection.cursor() as cursor:
         for batch in chain([first], batches):
-            cursor.executemany(INSERT.format(table=table), batch)
+            cursor.executemany(UPSERT.format(table=table), batch)
             total += len(batch)
-            logger.debug("inserted batch of %s into %s", len(batch), table)
+            logger.debug("upserted batch of %s into %s", len(batch), table)
     connection.commit()
     logger.info("loaded %s rows into %s", total, table)
     return total

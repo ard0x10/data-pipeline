@@ -53,9 +53,11 @@ There is no `--until` flag: a run loads everything changed on or after
       python -m pipeline.run --date "$(date -d "2026-07-01 +$day day" +%F)" --job orders
     done
 
-Backfills re-insert rows that already exist, so run them against a staging
-warehouse first, or truncate the target partitions beforehand. Keep the range
-short — each day replays every page the source API returns for that job.
+Re-running a day is safe: the load upserts on `source_id`, so rows that already
+exist are updated in place rather than duplicated. Apply
+`schema/0001_unique_source_id.sql` to the warehouse first — the upsert needs that
+unique constraint. Keep the range short anyway; each day replays every page the
+source API returns for that job.
 
 ## Tests
 
