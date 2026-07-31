@@ -6,24 +6,12 @@ import os
 import sys
 from datetime import date, datetime
 
-import yaml
-
+from .config import ConfigError, read_jobs
 from .extract import extract
 from .load import load
 from .transform import transform
 
 logger = logging.getLogger(__name__)
-
-SCHEDULE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "config",
-    "schedule.yaml",
-)
-
-
-def read_jobs(path=SCHEDULE):
-    with open(path, encoding="utf-8") as handle:
-        return yaml.safe_load(handle)["jobs"]
 
 
 def parse_date(value):
@@ -68,7 +56,10 @@ def run_job(connection, job, since):
 def main(argv=None):
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
     args = parse_args(argv)
-    jobs = select_jobs(read_jobs(), args.jobs)
+    try:
+        jobs = select_jobs(read_jobs(), args.jobs)
+    except ConfigError as exc:
+        raise SystemExit(f"invalid schedule: {exc}")
 
     # Imported once the arguments validate so `--help` and job selection stay
     # usable without the warehouse driver installed.

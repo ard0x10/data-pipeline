@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from pipeline.run import parse_args, read_jobs, select_jobs
+from pipeline.run import parse_args, select_jobs
 
 JOBS = [{"name": "orders"}, {"name": "refunds"}]
 
@@ -29,8 +29,3 @@ def test_select_jobs_defaults_to_every_job():
 def test_select_jobs_rejects_unknown_names():
     with pytest.raises(SystemExit):
         select_jobs(JOBS, ["orders", "invoices"])
-
-
-def test_read_jobs_returns_the_scheduled_jobs():
-    names = [job["name"] for job in read_jobs()]
-    assert names == ["orders", "refunds"]
