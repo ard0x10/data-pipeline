@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
+import logging
+
 from pipeline.transform import (
     COLUMN_MAP,
     dedupe,
     normalize_currency,
     parse_timestamp,
     transform,
+    warn_unmapped,
 )
 
 
@@ -53,6 +56,27 @@ def test_transform_fills_missing_fields_with_none():
     row = transform({"id": "ord_2"})
     assert row["amount_cents"] is None
     assert row["created_at"] is None
+
+
+def test_warn_unmapped_reports_unknown_fields():
+    seen = set()
+    assert warn_unmapped({"id": "ord_1", "vat_rate": 19, "channel": "web"}, seen) == [
+        "channel",
+        "vat_rate",
+    ]
+
+
+def test_warn_unmapped_stays_quiet_for_known_fields():
+    assert warn_unmapped({source: None for source in COLUMN_MAP}, set()) == []
+
+
+def test_warn_unmapped_reports_each_field_once(caplog):
+    seen = set()
+    with caplog.at_level(logging.WARNING, logger="pipeline.transform"):
+        warn_unmapped({"id": "ord_1", "vat_rate": 19}, seen)
+        warn_unmapped({"id": "ord_2", "vat_rate": 21}, seen)
+    assert len(caplog.records) == 1
+    assert "vat_rate" in caplog.records[0].getMessage()
 
 
 def test_dedupe_keeps_first_occurrence():
